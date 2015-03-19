@@ -9,6 +9,7 @@ import json
 import fcntl
 import re
 import HTMLParser
+from collections import deque
 # Go to http://apps.twitter.com and create an app.
 # The consumer key and secret will be generated for you after
 consumer_key="NJCjifiHUVAJZy7YWAzh7oTtt"
@@ -18,6 +19,7 @@ consumer_secret="BIU0bilnYQpB7i0wZB4ziQHeGBr5pk2xf7Mb4hjJ3P6sNdFWi7"
 access_token="601757547-6AHTD2XJVLoir2HfRp2yvwrPREtQy3O60dre03h1"
 access_token_secret="AvBXrocbNYEAKLcvalyT6OoblkFvMiAInnZ1MePuGpoEX"
 tweets = list()
+output_text = deque()
 h = HTMLParser.HTMLParser()
 class StdOutListener(StreamListener):
     """ A listener handles tweets are the received from the stream.
@@ -31,31 +33,30 @@ class StdOutListener(StreamListener):
 def parse_tweet():
     global tweets
     while True:
-        if len(tweets) >= 5:
-            output_text = ''
-            output_file = open('output.txt', 'w')
-            i = 5
-            while i > 0 and len(tweets) > 0:
-                item = tweets.pop()
-                tweet = json.loads(item)
-                screen_name = '@' + tweet['user']['screen_name'] + " : "
-                tweet_text = tweet['text']
-                tweet_text = tweet_text.encode('ascii', 'ignore')
-                if tweet_text == '' or re.search(r'^RT|^\n', tweet_text): 
-                    continue
-                tweet_text = tweet_text.replace('\n', ' ').replace('\r', '')
-                tweet_text = re.sub('https?:\/\/[^\s]*', '', tweet_text)
-                tweet_text = re.sub(' +', ' ', tweet_text)  
-                tweet_text = h.unescape(tweet_text)
-                print(screen_name)
-                print(tweet_text)
-                output_text += screen_name + tweet_text + " "
-                i -= 1
-            fcntl.flock(output_file.fileno(), fcntl.LOCK_EX)
-            output_file.write(output_text)
-            output_file.close()           
+        output_file = open('output.txt', 'w')
+        i = 5
+        for i in range(len(tweets)):
+            item = tweets.pop()
+            tweet = json.loads(item)
+            tweet_text = tweet['text']
+            if tweet_text == '' or re.search(r'^RT|^\n', tweet_text):
+                continue
+            screen_name = '@' + tweet['user']['screen_name'] + " : "
+            tweet_text = tweet_text.encode('ascii', 'ignore')
+            tweet_text = tweet_text.replace('\n', ' ').replace('\r', '')
+            tweet_text = re.sub('https?:\/\/[^\s]*', '', tweet_text)
+            tweet_text = re.sub(' +', ' ', tweet_text)  
+            tweet_text = h.unescape(tweet_text)
+            print(screen_name)
+            print(tweet_text)
+            output_text.append(screen_name + tweet_text + " ")
+            if len(output_text) > 5:
+                output_text.popleft()
+        fcntl.flock(output_file.fileno(), fcntl.LOCK_EX)
+        output_file.writelines(output_text)
+        output_file.close()           
         if len(tweets) > 50:
-            tweets = []
+            del tweets[:-10]
         time.sleep(5)
 if __name__ == '__main__':
     worker = Thread(target = parse_tweet)
@@ -64,5 +65,5 @@ if __name__ == '__main__':
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     stream = Stream(auth, l)
-    stream.filter(track=['basketball'])
+    stream.filter(track=['tazo'])
     
