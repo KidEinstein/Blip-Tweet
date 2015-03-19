@@ -41,9 +41,7 @@ def parse_tweet():
                 screen_name = '@' + tweet['user']['screen_name'] + " : "
                 tweet_text = tweet['text']
                 tweet_text = tweet_text.encode('ascii', 'ignore')
-                if tweet_text == '' or re.search(r'^RT|^[\n]', tweet_text): 
-                    #print("its a retweet")
-                    i += 1
+                if tweet_text == '' or re.search(r'^RT|^\n', tweet_text): 
                     continue
                 tweet_text = tweet_text.replace('\n', ' ').replace('\r', '')
                 tweet_text = re.sub('https?:\/\/[^\s]*', '', tweet_text)
@@ -56,8 +54,8 @@ def parse_tweet():
             fcntl.flock(output_file.fileno(), fcntl.LOCK_EX)
             output_file.write(output_text)
             output_file.close()           
-            if len(tweets) > 50:
-                tweets = []
+        if len(tweets) > 50:
+            tweets = []
         time.sleep(5)
 if __name__ == '__main__':
     worker = Thread(target = parse_tweet)
