@@ -33,22 +33,23 @@ class StdOutListener(StreamListener):
 def check_tag():
     global stream
     global search_term
+    global tweets
     print(search_term)
     fetched_data = requests.get('http://results.zz.mu/hashtag.txt')
+    print(fetched_data.text)
     print(fetched_data.text)
     if fetched_data.text != search_term:
         print('Killed it!')
         search_term = fetched_data.text
+        tweets = []
         stream.disconnect()
+        time.sleep(5)
         stream.filter(track=[search_term], async=True)
-        return False
-    return True
     
 
 
 def parse_tweet():
     global tweets
-    
     while True:
         check_tag();
         output_file = open('output.txt', 'w')
