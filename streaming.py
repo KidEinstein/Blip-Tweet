@@ -34,33 +34,31 @@ def check_tag():
     global stream
     global search_term
     global tweets
-    print(search_term)
-    try:
-        fetched_data = requests.get('http://results.zz.mu/hashtag.txt')
-    except:
-        return;
-    print(fetched_data.text)
-    print(fetched_data.text)
-    if not stream.running:
-        time.sleep(5)
-        stream.filter(track=[search_term], async=True)
-    if fetched_data.text != search_term:
-        print('Killed it!')
-        search_term = fetched_data.text
-        tweets = []
-        if stream.running:
-            stream.disconnect()
-            time.sleep(5)
-            stream.filter(track=[search_term], async=True)
-            time.sleep(5)
+    while(True):
+        print(search_term)
     
-
+        fetched_data = requests.get('http://results.zz.mu/hashtag.txt')
+        print(fetched_data.text)
+        print(fetched_data.text)
+        if fetched_data.text != search_term:
+            print('Killed it!')
+            search_term = fetched_data.text
+            tweets = []
+            if stream.running:
+                stream.disconnect()
+                time.sleep(3)
+                stream.filter(track=[search_term], async=True)
+                time.sleep(3)
+        if not stream.running:
+            time.sleep(3)
+            stream.filter(track=[search_term], async=True)
+            time.sleep(3)
+        time.sleep(7)
 
 def parse_tweet():
     global tweets
     while True:
         try:
-            check_tag();
             output_file = open('output.txt', 'w')
             while tweets:
                 item = tweets.pop()
@@ -89,8 +87,8 @@ def parse_tweet():
             if len(tweets) > 50:
                 del tweets[:-10]
             time.sleep(1)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         
 if __name__ == '__main__':
@@ -98,7 +96,8 @@ if __name__ == '__main__':
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     stream = Stream(auth, l)
-    stream.filter(track=[search_term], async=True)
     worker = Thread(target = parse_tweet)
     worker.start()
+    worker1 = Thread(target = check_tag)
+    worker1.start()
 
