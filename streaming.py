@@ -11,7 +11,7 @@ import re
 import HTMLParser
 from collections import deque
 import requests
-from auth2 import *
+from auth import * #Put consumer_key, consumer_secret, access_token, access_token_secret here
 
 tweets = list()
 output_text = deque()
